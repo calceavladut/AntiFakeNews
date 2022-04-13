@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+    php:
+        build: .
+        volumes:
+            - ./:/var/www/html
+        networks:
+            - internal
+
+    nginx:
+        image: nginx:alpine
+        volumes:
+            - ./:/var/www/html
+            - .docker/nginx/templates:/etc/nginx/templates
+        environment:
+            - NGINX_HOST=${HOST}
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.rule=Host(`${HOST}`)
+            - traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.entrypoints=web
+        networks:
+            - proxy
+            - internal
+
+    mysql:
+        image: mysql:8
+        volumes:
+            - mysql-data:/var/lib/mysql
+            - .docker/mysql/log:/var/log/mysql
+        ports:
+            - ${MYSQL_PORT}:3306
+        command:
+            - --general-log=1
+            - --general-log-file=/var/log/mysql/queries.log
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        networks:
+            - internal
+
+volumes:
+    mysql-data:
+
+networks:
+    proxy:
+        external: true
+    internal:
+        external: false

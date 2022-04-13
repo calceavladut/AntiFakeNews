@@ -1,0 +1,8 @@
+var/
+vendor/
+public/bundles/
+.env
+phpunit.xml
+.docker/mysql/log/queries.log
+.idea/
+.DS_Store

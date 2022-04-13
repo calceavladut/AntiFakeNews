@@ -1,0 +1,14 @@
+var/
+vendor/
+node_modules/
+tests/
+phpunit.xml.dist
+.editorconfig
+.git
+.gitignore
+.dockerignore
+docker-compose.*
+Dockerfile
+.env*
+.DS_Store
+.idea
