@@ -3,9 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ExtractedArticle;
-use App\Entity\ExtractedArticles;
 use App\Form\ArticleFormType;
-use Doctrine\ORM\EntityManager;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,45 +11,57 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
 use Doctrine\ORM\EntityManagerInterface;
+use function Symfony\Component\String\b;
 
 
 class TestController extends AbstractController
 {
 
-    public function extractContent(string $url = '')
+    private ManagerRegistry $doctrine;
+
+    /**
+     * @param ManagerRegistry $doctrine
+     */
+    public function __construct(ManagerRegistry $doctrine)
     {
+        $this->doctrine = $doctrine;
+    }
+
+
+    public function extractContent(string $url)
+    {
+        $body = '{"text":"'. $url . '","tab":"ae","options":{}}';
+
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, 'https://www.summarizebot.com/scripts/analysis.py');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"https://www.elmundo.es/deportes/futbol/premier-league/2022/04/09/6251b7dafdddff50718b45a1.html\",\"tab\":\"ae\",\"options\":{}}");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate');
 
         return curl_exec($ch);
     }
 
-    public function verifyUrl(string $url = '')
+    public function verifyUrl(string $url)
     {
         $ch = curl_init();
+        $body = '{"text":"'. $url . '","tab":"fn","options":{}}';
 
         curl_setopt($ch, CURLOPT_URL, 'https://www.summarizebot.com/scripts/analysis.py');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"https://www.elmundo.es/deportes/futbol/premier-league/2022/04/09/6251b7dafdddff50718b45a1.html\",\"tab\":\"fn\",\"options\":{}}");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate');
 
-        return [
-            'result' => curl_exec($ch),
-            'url' => 'https://www.elmundo.es/deportes/futbol/premier-league/2022/04/09/6251b7dafdddff50718b45a1.html'
-        ];
+        return curl_exec($ch);
     }
 
     /**
      * @throws \ErrorException
      */
     public function translate($data) {
-        $translator = new GoogleTranslate(' en');
+        $translator = new GoogleTranslate('en');
 
         return [
             'title' => $translator->translate($data['title']),
@@ -60,13 +70,12 @@ class TestController extends AbstractController
     }
 
     /**
-     * @Route("/save", name="save_content")
      * @throws \ErrorException
      */
-    public function saveContent(ManagerRegistry $doctrine): Response
+    public function saveContent(string $url)
     {
-        $url = $_GET['url'];
         $result = $this->extractContent($url);
+        $entityManager = $this->doctrine->getManager();
 
         $data = [
             "title" => json_decode($result)->{'article title'},
@@ -75,8 +84,6 @@ class TestController extends AbstractController
 
         $dataTranslated = $this->translate($data);
 
-        $entityManager = $doctrine->getManager();
-
         $product = new ExtractedArticle();
         $product->setOriginalContent(json_decode($result)->{'text'});
         $product->setOriginalTitle(json_decode($result)->{'article title'});
@@ -84,22 +91,17 @@ class TestController extends AbstractController
         $product->setTranslatedTitle($dataTranslated['title']);
         $product->setUrl($url);
 
-        // tell Doctrine you want to (eventually) save the Product (no queries yet)
         $entityManager->persist($product);
-
-        // actually executes the queries (i.e. the INSERT query)
         $entityManager->flush();
 
-
-        return $this->redirectToRoute('verify_url', [
-            'url' => $url
-        ]);
+        return $this->getUrlStats($url);
     }
 
     /**
-     * @Route("/new", name="new_article_extracted")
+     * @Route("/", name="homepage")
+     * @throws \ErrorException
      */
-    public function new(EntityManagerInterface $em, Request $request)
+    public function new(Request $request)
     {
         $form = $this->createForm(ArticleFormType::class);
         $form->handleRequest($request);
@@ -107,9 +109,7 @@ class TestController extends AbstractController
 
             $this->addFlash('success', 'Articolul a fost extras cu succes.');
 
-            return $this->redirectToRoute('save_content', [
-                'url' => $form->getData()->getUrl()
-            ]);
+            return $this->saveContent($form->getData()->getUrl());
         }
 
         return $this->render('index.html.twig', [
@@ -119,25 +119,21 @@ class TestController extends AbstractController
 
     /**
      * @Route("/get-url", name="get_url_from_extension")
+     * @throws \ErrorException
      */
-    public function getUrlFromExtension() {
-        return $this->redirectToRoute('save_content', [
-            'url' => $_POST['url']
-        ]);
+    public function getUrlFromExtension()
+    {
+        return $this->saveContent($_POST['url']);
     }
 
-    /**
-     * @Route("/verify-url", name="verify_url")
-     */
-    public function getUrlStats() {
-        $result = $this->verifyUrl();
-
-        $rand = rand(0, 100) / 100;
-        $real = $rand;
-        $fake = 1 - $rand;
-        dump($real . '      ');
-        dump($fake);
-//        dd(json_decode($result));
-        return new Response('{"real": ' .'"'.$real.'"' . ', "fake": ' . '"'. $fake .'"}');
+    public function getUrlStats(string $url) {
+        $result = $this->verifyUrl($url);
+        var_dump($result);
+        foreach (json_decode($result)->{'predictions'} as $type) {
+            $fake = $type->{'type'} == 'fake' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
+            $real = $type->{'type'} == 'real' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
+        }
+        dd('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+        return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
     }
 }
