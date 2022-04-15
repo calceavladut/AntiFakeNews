@@ -1,4 +1,4 @@
-{{ form_start(studentForm) }}
+{{ form_start(articleForm) }}
 
 {% block content_body %}
     <div class="container col-md-6 ">
@@ -6,7 +6,7 @@
             <div class="card-header">Adaugare Student:</div>
             <div class="p-4">
                 <div class="mb-3">
-                    {{ form_row(studentForm.url, {
+                    {{ form_row(articleForm.url, {
                         label: 'Grupa studentului: '
                     }) }}
 
@@ -15,4 +15,4 @@
         </div>
     </div>
 {% endblock %}
-{{ form_end(studentForm) }}
+{{ form_end(articleForm) }}
