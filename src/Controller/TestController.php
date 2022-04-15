@@ -112,7 +112,7 @@ class TestController extends AbstractController
             ]);
         }
 
-        return $this->render('form.html.twig', [
+        return $this->render('index.html.twig', [
             'articleForm' => $form->createView()
         ]);
     }
@@ -131,7 +131,13 @@ class TestController extends AbstractController
      */
     public function getUrlStats() {
         $result = $this->verifyUrl();
+
+        $rand = rand(0, 100) / 100;
+        $real = $rand;
+        $fake = 1 - $rand;
+        dump($real . '      ');
+        dump($fake);
 //        dd(json_decode($result));
-        return new Response('E aproape real !');
+        return new Response('{\'real\':\'' . $real . '\', \'fake\':\'' . $fake . '\'}');
     }
 }
