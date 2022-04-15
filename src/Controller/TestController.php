@@ -33,9 +33,6 @@ class TestController extends AbstractController
 
         $result = curl_exec($ch);
 
-
-
-        dd($result);
         echo(json_decode($result)->{'article title'});
 
         $translator = new GoogleTranslate(' en');
@@ -102,7 +99,7 @@ class TestController extends AbstractController
             ]);
         }
 
-        return $this->render('form.html.twig', [
+        return $this->render('index.html.twig', [
             'studentForm' => $form->createView()
         ]);
     }
