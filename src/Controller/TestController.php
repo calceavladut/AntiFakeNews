@@ -31,6 +31,22 @@ class TestController extends AbstractController
         return curl_exec($ch);
     }
 
+    public function verifyUrl(string $url = '')
+    {
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, 'https://www.summarizebot.com/scripts/analysis.py');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"https://www.elmundo.es/deportes/futbol/premier-league/2022/04/09/6251b7dafdddff50718b45a1.html\",\"tab\":\"fn\",\"options\":{}}");
+        curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate');
+
+        return [
+            'result' => curl_exec($ch),
+            'url' => 'https://www.elmundo.es/deportes/futbol/premier-league/2022/04/09/6251b7dafdddff50718b45a1.html'
+        ];
+    }
+
     /**
      * @throws \ErrorException
      */
@@ -49,7 +65,8 @@ class TestController extends AbstractController
      */
     public function saveContent(ManagerRegistry $doctrine): Response
     {
-        $result = $this->extractContent($_GET['url']);
+        $url = $_GET['url'];
+        $result = $this->extractContent($url);
 
         $data = [
             "title" => json_decode($result)->{'article title'},
@@ -65,7 +82,7 @@ class TestController extends AbstractController
         $product->setOriginalTitle(json_decode($result)->{'article title'});
         $product->setTranslatedContent($dataTranslated['text']);
         $product->setTranslatedTitle($dataTranslated['title']);
-        $product->setUrl($_GET['url']);
+        $product->setUrl($url);
 
         // tell Doctrine you want to (eventually) save the Product (no queries yet)
         $entityManager->persist($product);
@@ -74,7 +91,9 @@ class TestController extends AbstractController
         $entityManager->flush();
 
 
-        return new Response('Saved new product with id '.$product->getId());
+        return $this->redirectToRoute('verify_url', [
+            'url' => $url
+        ]);
     }
 
     /**
@@ -105,5 +124,14 @@ class TestController extends AbstractController
         return $this->redirectToRoute('save_content', [
             'url' => $_POST['url']
         ]);
+    }
+
+    /**
+     * @Route("/verify-url", name="verify_url")
+     */
+    public function getUrlStats() {
+        $result = $this->verifyUrl();
+//        dd(json_decode($result));
+        return new Response('E aproape real !');
     }
 }
