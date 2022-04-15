@@ -138,6 +138,6 @@ class TestController extends AbstractController
         dump($real . '      ');
         dump($fake);
 //        dd(json_decode($result));
-        return new Response('{\'real\':\'' . $real . '\', \'fake\':\'' . $fake . '\'}');
+        return new Response('{"real":" . $real . ", "fake":" . $fake . "}');
     }
 }

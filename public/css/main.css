@@ -819,7 +819,7 @@ legend {
   -ms-flex-align: center;
       align-items: center;
   font-family: 'Poppins', sans-serif;
-  background-color: #a598ee;
+  background-color: #1e2933;
   background-size: cover;
   background-position: center center;
   padding: 15px;
@@ -857,6 +857,9 @@ legend {
   padding: 10px 32px;
   font-size: 16px;
   color: #555;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-right: 10px;
 }
 
 .s003 form .inner-form .input-field input.placeholder {
@@ -947,7 +950,7 @@ legend {
 
 .s003 form .inner-form .input-field.first-wrap .choices__list--dropdown .choices__item--selectable.is-highlighted {
   background: #fff;
-  color: #63c76a;
+  color: #5ee432;
 }
 
 .s003 form .inner-form .input-field.first-wrap .choices__list--dropdown .choices__item {
@@ -971,7 +974,7 @@ legend {
   color: #fff;
   border: 0;
   cursor: pointer;
-  background: #63c76a;
+  background: #ef4655;
   transition: all .2s ease-out, color .2s ease-out;
 }
 
@@ -980,7 +983,7 @@ legend {
 }
 
 .s003 form .inner-form .input-field.third-wrap .btn-search:hover {
-  background: #50c058;
+  background: #5ee432;
 }
 
 .s003 form .inner-form .input-field.third-wrap .btn-search:focus {
