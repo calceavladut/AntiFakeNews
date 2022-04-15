@@ -4,27 +4,31 @@ namespace App\Controller;
 
 use App\Entity\ExtractedArticle;
 use App\Form\ArticleFormType;
+use App\Repository\ExtractedArticleRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
-use Doctrine\ORM\EntityManagerInterface;
-use function Symfony\Component\String\b;
 
 
 class TestController extends AbstractController
 {
+    private ObjectManager $entityManager;
 
     private ManagerRegistry $doctrine;
+
+    private ExtractedArticleRepository $articleRepository;
 
     /**
      * @param ManagerRegistry $doctrine
      */
-    public function __construct(ManagerRegistry $doctrine)
+    public function __construct(ManagerRegistry $doctrine, ExtractedArticleRepository $articleRepository)
     {
         $this->doctrine = $doctrine;
+        $this->entityManager = $this->doctrine->getManager();
+        $this->articleRepository = $articleRepository;
     }
 
 
@@ -75,7 +79,6 @@ class TestController extends AbstractController
     public function saveContent(string $url)
     {
         $result = $this->extractContent($url);
-        $entityManager = $this->doctrine->getManager();
 
         $data = [
             "title" => json_decode($result)->{'article title'},
@@ -83,16 +86,17 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
+        if (!$this->articleRepository->findArticleByUrl($url)) {
+            $article = new ExtractedArticle();
+            $article->setOriginalContent(json_decode($result)->{'text'});
+            $article->setOriginalTitle(json_decode($result)->{'article title'});
+            $article->setTranslatedContent($dataTranslated['text']);
+            $article->setTranslatedTitle($dataTranslated['title']);
+            $article->setUrl($url);
 
-        $product = new ExtractedArticle();
-        $product->setOriginalContent(json_decode($result)->{'text'});
-        $product->setOriginalTitle(json_decode($result)->{'article title'});
-        $product->setTranslatedContent($dataTranslated['text']);
-        $product->setTranslatedTitle($dataTranslated['title']);
-        $product->setUrl($url);
-
-        $entityManager->persist($product);
-        $entityManager->flush();
+            $this->entityManager->persist($article);
+            $this->entityManager->flush();
+        }
 
         return $this->getUrlStats($url);
     }
@@ -132,8 +136,25 @@ class TestController extends AbstractController
         foreach (json_decode($result)->{'predictions'} as $type) {
             $fake = $type->{'type'} == 'fake' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
             $real = $type->{'type'} == 'real' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
+            $categories = $type->{'type'} == 'fake' ? $type->{'categories'}: [];
         }
 
-        return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+        foreach ($categories as $category) {
+            $bias = $category->{'type'} == 'bias' ? $category->{'confidence'}: 0;;
+            $conspiracy = $category->{'type'} == 'conspiracy' ? $category->{'confidence'}: 0;;
+            $propaganda = $category->{'type'} == 'propaganda' ? $category->{'confidence'}: 0;;
+            $pseudoscience = $category->{'type'} == 'pseudoscience' ? $category->{'confidence'}: 0;;
+            $irony = $category->{'type'} == 'irony' ? $category->{'confidence'}: 0;;
+        }
+
+        return [
+            'fake' => $fake,
+            'real' => $real,
+            'bias' => $bias,
+            'conspiracy' => $conspiracy,
+            'propaganda' => $propaganda,
+            'pseudoscience' => $pseudoscience,
+            'irony' => $irony
+        ];
     }
 }
