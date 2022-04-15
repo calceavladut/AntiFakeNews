@@ -48,7 +48,7 @@ class TestController extends AbstractController
         return curl_exec($ch);
     }
 
-    public function verifyUrl(string $url)
+    public function verifyUrl(string $url): bool|string
     {
         $ch = curl_init();
         $body = '{"text":"'. $url . '","tab":"fn","options":{}}';
@@ -71,7 +71,7 @@ class TestController extends AbstractController
         ];
     }
 
-    public function saveContent(string $url): array
+    public function saveContent(string $url)
     {
         $result = $this->extractContent($url);
 
@@ -99,7 +99,7 @@ class TestController extends AbstractController
     /**
      * @Route("/", name="homepage")
      */
-    public function new(Request $request): array|Response
+    public function new(Request $request)
     {
         $form = $this->createForm(ArticleFormType::class);
         $form->handleRequest($request);
@@ -118,7 +118,7 @@ class TestController extends AbstractController
     /**
      * @Route("/get-url", name="get_url_from_extension")
      */
-    public function getUrlFromExtension(): array
+    public function getUrlFromExtension()
     {
         return $this->saveContent($_POST['url']);
     }
@@ -150,6 +150,7 @@ class TestController extends AbstractController
             'irony' => $irony or 0
         ];
 
+        return new Response('asd');
         // ii trimiti aici metoda ta cu dates
 //        return $dates;
     }
