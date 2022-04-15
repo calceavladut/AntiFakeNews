@@ -125,6 +125,13 @@ class TestController extends AbstractController
 
     public function getUrlStats(string $url) {
         $result = $this->verifyUrl($url);
+        $real = 0;
+        $fake = 0;
+        $bias = 0;
+        $conspiracy = 0;
+        $propaganda = 0;
+        $pseudoscience = 0;
+        $irony = 0;
 
         foreach (json_decode($result)->{'predictions'} as $type) {
             $fake = $type->{'type'} == 'fake' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
@@ -141,13 +148,13 @@ class TestController extends AbstractController
         }
 
         $dates = [
-            'fake' => $fake or 0,
-            'real' => $real or 0,
-            'bias' => $bias or 0,
-            'conspiracy' => $conspiracy or 0,
-            'propaganda' => $propaganda or 0,
-            'pseudoscience' => $pseudoscience or 0,
-            'irony' => $irony or 0
+            'fake' => $fake,
+            'real' => $real,
+            'bias' => $bias,
+            'conspiracy' => $conspiracy,
+            'propaganda' => $propaganda,
+            'pseudoscience' => $pseudoscience,
+            'irony' => $irony
         ];
 
         return new Response('asd');
