@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
+use Symfony\Component\HttpFoundation\Response;
 
 
 class TestController extends AbstractController
@@ -61,9 +62,6 @@ class TestController extends AbstractController
         return curl_exec($ch);
     }
 
-    /**
-     * @throws \ErrorException
-     */
     public function translate($data) {
         $translator = new GoogleTranslate('en');
 
@@ -73,10 +71,7 @@ class TestController extends AbstractController
         ];
     }
 
-    /**
-     * @throws \ErrorException
-     */
-    public function saveContent(string $url)
+    public function saveContent(string $url): array
     {
         $result = $this->extractContent($url);
 
@@ -103,9 +98,8 @@ class TestController extends AbstractController
 
     /**
      * @Route("/", name="homepage")
-     * @throws \ErrorException
      */
-    public function new(Request $request)
+    public function new(Request $request): array|Response
     {
         $form = $this->createForm(ArticleFormType::class);
         $form->handleRequest($request);
@@ -123,9 +117,8 @@ class TestController extends AbstractController
 
     /**
      * @Route("/get-url", name="get_url_from_extension")
-     * @throws \ErrorException
      */
-    public function getUrlFromExtension()
+    public function getUrlFromExtension(): array
     {
         return $this->saveContent($_POST['url']);
     }
@@ -147,14 +140,17 @@ class TestController extends AbstractController
             $irony = $category->{'type'} == 'irony' ? $category->{'confidence'}: 0;;
         }
 
-        return [
-            'fake' => $fake,
-            'real' => $real,
-            'bias' => $bias,
-            'conspiracy' => $conspiracy,
-            'propaganda' => $propaganda,
-            'pseudoscience' => $pseudoscience,
-            'irony' => $irony
+        $dates = [
+            'fake' => $fake or 0,
+            'real' => $real or 0,
+            'bias' => $bias or 0,
+            'conspiracy' => $conspiracy or 0,
+            'propaganda' => $propaganda or 0,
+            'pseudoscience' => $pseudoscience or 0,
+            'irony' => $irony or 0
         ];
+
+        // ii trimiti aici metoda ta cu dates
+//        return $dates;
     }
 }
