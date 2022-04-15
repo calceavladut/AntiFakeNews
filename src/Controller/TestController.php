@@ -128,12 +128,12 @@ class TestController extends AbstractController
 
     public function getUrlStats(string $url) {
         $result = $this->verifyUrl($url);
-        var_dump($result);
+
         foreach (json_decode($result)->{'predictions'} as $type) {
             $fake = $type->{'type'} == 'fake' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
             $real = $type->{'type'} == 'real' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
         }
-        dd('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+
         return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
     }
 }
