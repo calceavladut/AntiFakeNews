@@ -3,7 +3,7 @@
 namespace App\Form;
 
 use App\Entity\ExtractedArticle;
-use AtLeastOneField;
+use App\Validator\Constraints\AtLeastOneField;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;

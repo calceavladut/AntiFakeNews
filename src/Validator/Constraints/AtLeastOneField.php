@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Validator\Constraints;
+
 use Symfony\Component\Validator\Constraint;
 /**
  * Class AtLeastOneField
