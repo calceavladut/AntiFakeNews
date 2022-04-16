@@ -183,9 +183,9 @@ class TestController extends AbstractController
     /**
      * @Route("/get-url", name="get_url_from_extension")
      */
-    public function getUrlFromExtension(Request $request)
+    public function getUrlFromExtension()
     {
-        return $this->saveContentFromUrl($_POST['url']);
+        return $this->saveContentFromUrl($_GET['url']);
     }
 
     /**
