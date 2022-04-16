@@ -85,10 +85,11 @@ class TestController extends AbstractController
 
     /**
      * @param string $url
+     * @param false $isForApi
      * @return Response
      * @throws \ErrorException
      */
-    public function saveContentFromUrl(string $url): Response
+    public function saveContentFromUrl(string $url, bool $isForApi = false): Response
     {
         $result = $this->extractContent($url);
 
@@ -110,6 +111,11 @@ class TestController extends AbstractController
 
             $this->entityManager->persist($article);
             $this->entityManager->flush();
+        }
+
+        if ($isForApi) {
+//            $route = $this->generateUrl('generated_url', ['id' => $article->getId()]);
+            return $this->getUrlStats($url, true);
         }
 
         return $this->redirectToRoute('generated_url', ['id' => $article->getId()]);
@@ -185,14 +191,15 @@ class TestController extends AbstractController
      */
     public function getUrlFromExtension()
     {
-        return $this->saveContentFromUrl($_GET['url']);
+        return $this->saveContentFromUrl($_GET['url'], true);
     }
 
     /**
      * @param string|null $url
+     * @param false $isForApi
      * @return Response
      */
-    public function getUrlStats(?string $url) {
+    public function getUrlStats(?string $url, $isForApi = false) {
         $result = $this->verifyUrl($url);
         $real = 0;
         $fake = 0;
@@ -226,6 +233,11 @@ class TestController extends AbstractController
             'irony' => $irony
         ];
 
-        return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+        if ($isForApi) {
+            return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+        }
+
+        return new Response('test');
+
     }
 }
