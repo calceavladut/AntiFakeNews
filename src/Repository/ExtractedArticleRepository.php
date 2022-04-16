@@ -51,7 +51,7 @@ class ExtractedArticleRepository extends ServiceEntityRepository
             ->andWhere('a.url = :val')
             ->setParameter('val', $url)
             ->getQuery()
-            ->getResult()
+            ->getSingleResult()
             ;
     }
 

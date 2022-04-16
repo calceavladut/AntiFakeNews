@@ -32,7 +32,10 @@ class TestController extends AbstractController
         $this->articleRepository = $articleRepository;
     }
 
-
+    /**
+     * @param string $url
+     * @return bool|string
+     */
     public function extractContent(string $url)
     {
         $body = '{"text":"'. $url . '","tab":"ae","options":{}}';
@@ -48,6 +51,10 @@ class TestController extends AbstractController
         return curl_exec($ch);
     }
 
+    /**
+     * @param string $url
+     * @return bool|string
+     */
     public function verifyUrl(string $url): bool|string
     {
         $ch = curl_init();
@@ -62,6 +69,11 @@ class TestController extends AbstractController
         return curl_exec($ch);
     }
 
+    /**
+     * @param $data
+     * @return array
+     * @throws \ErrorException
+     */
     public function translate($data) {
         $translator = new GoogleTranslate('en');
 
@@ -71,17 +83,24 @@ class TestController extends AbstractController
         ];
     }
 
-    public function saveContent(string $url)
+    /**
+     * @param string $url
+     * @return Response
+     * @throws \ErrorException
+     */
+    public function saveContentFromUrl(string $url): Response
     {
         $result = $this->extractContent($url);
 
         $data = [
             "title" => json_decode($result)->{'article title'},
-            "text" => json_decode($result)->{'text'}
+            "text"  => json_decode($result)->{'text'}
         ];
 
         $dataTranslated = $this->translate($data);
-        if (!$this->articleRepository->findArticleByUrl($url)) {
+        $article = $this->articleRepository->findArticleByUrl($url);
+
+        if (!$article) {
             $article = new ExtractedArticle();
             $article->setOriginalContent(json_decode($result)->{'text'});
             $article->setOriginalTitle(json_decode($result)->{'article title'});
@@ -93,7 +112,46 @@ class TestController extends AbstractController
             $this->entityManager->flush();
         }
 
-        return $this->getUrlStats($url);
+        return $this->redirectToRoute('generated_url', ['id' => $article->getId()]);
+    }
+
+    /**
+     * @param string $text
+     * @return Response
+     * @throws \ErrorException
+     */
+    public function verifyContentFromText(string $text)
+    {
+        $data = [
+            "title" => "",
+            "text"  => $text
+        ];
+
+        $dataTranslated = $this->translate($data);
+
+        $article = new ExtractedArticle();
+        $article->setTranslatedContent($dataTranslated['text']);
+
+        $this->entityManager->persist($article);
+        $this->entityManager->flush();
+
+        return $this->redirectToRoute('generated_url', ['id' => $article->getId()]);
+    }
+
+    /**
+     * @Route("/posts/{id}", name="generated_url")
+     */
+    public function generateTranslatedTextUrl($id)
+    {
+        $article = $this->articleRepository->find($id);
+        if (is_object($article)) {
+            return $this->render('text_page.html.twig', [
+                'title' => $article->getTranslatedTitle() ?: '',
+                'text'  => $article->getTranslatedContent()
+            ]);
+        }
+
+        return new Response('Could not find nothin\'');
     }
 
     /**
@@ -107,7 +165,14 @@ class TestController extends AbstractController
 
             $this->addFlash('success', 'Articolul a fost extras cu succes.');
 
-            return $this->saveContent($form->getData()->getUrl());
+            /** @var ExtractedArticle $data */
+            $data = $form->getData();
+
+            if ($data->getUrl()) {;
+                return $this->saveContentFromUrl($data->getUrl());
+            } else if ($data->getText()) {
+                return $this->verifyContentFromText($data->getText());
+            }
         }
 
         return $this->render('index.html.twig', [
@@ -118,11 +183,15 @@ class TestController extends AbstractController
     /**
      * @Route("/get-url", name="get_url_from_extension")
      */
-    public function getUrlFromExtension()
+    public function getUrlFromExtension(Request $request)
     {
-        return $this->saveContent($_POST['url']);
+        return $this->saveContentFromUrl($request->get('url'));
     }
 
+    /**
+     * @param string $url
+     * @return Response
+     */
     public function getUrlStats(string $url) {
         $result = $this->verifyUrl($url);
         $real = 0;
