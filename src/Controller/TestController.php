@@ -79,7 +79,7 @@ class TestController extends AbstractController
 
         return [
             'title' => $translator->translate($data['title']),
-            'text' => $translator->translate($data['text'])
+            'text'  => $translator->translate($data['text'])
         ];
     }
 
@@ -185,14 +185,14 @@ class TestController extends AbstractController
      */
     public function getUrlFromExtension(Request $request)
     {
-        return $this->saveContentFromUrl($request->get('url'));
+        return $this->saveContentFromUrl($_POST['url']);
     }
 
     /**
-     * @param string $url
+     * @param string|null $url
      * @return Response
      */
-    public function getUrlStats(string $url) {
+    public function getUrlStats(?string $url) {
         $result = $this->verifyUrl($url);
         $real = 0;
         $fake = 0;
