@@ -13,7 +13,12 @@ html {
  * Remove the margin in all browsers (opinionated).
  */
 body {
-  margin: 0;
+    background-color: #1e2933;
+    color: #b9cddf;
+    font-family: "Montserrat", sans-serif !important;
+    text-align: center;
+    position: relative;
+    margin: 50px 0 0 0;
 }
 
 /**
@@ -1032,4 +1037,103 @@ legend {
     margin-bottom: 0;
     width: 100%;
   }
+}
+
+form[name="article_form"] {
+    text-align: center;
+    height: 300px;
+    position: relative;
+}
+
+.nav.nav-pills {
+    width: 100%;
+    margin: 0 !important;
+}
+
+li.nav-item {
+    width: 50%;
+}
+
+li.nav-item button.nav-link {
+    width: 100%;
+    background: #b9cddf;
+    color: #1e2933;
+    font-weight: 700;
+    filter: brightness(65%);
+}
+
+li.nav-item button.nav-link.active {
+    background: #F8774B !important;
+    color: #fff;
+    filter: brightness(100%);
+}
+
+#pills-url-tab {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+#pills-text-tab {
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.tab-content input,
+.tab-content textarea {
+    width: 100%;
+    padding: 10px;
+}
+
+.tab-content textarea {
+    height: 300px;
+}
+
+.tab-content label {
+    display: none;
+}
+
+#article_form_submit {
+    text-transform: uppercase;
+    font-weight: 700;
+    background: #C9DE3C;
+    margin-top: 20px;
+    width: 100%;
+}
+
+#article_form_submit:hover {
+    filter: brightness(85%);
+}
+
+h2 {
+    color: #C9DE3C;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+h3 {
+    margin: 0;
+    font-weight: 300;
+    font-size: 16px;
+}
+
+h3 span {
+    font-weight: 700;
+}
+
+#header {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    top: 100px;
+}
+
+#pills-url ul {
+    list-style-type: none;
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translate(-50%, 0);
 }

@@ -16,6 +16,9 @@ class ExtractedArticle
     #[ORM\Column(type: 'string', length: 255)]
     private $url;
 
+    #[ORM\Column(type: 'string', length: 255)]
+    private $text;
+
     #[ORM\Column(type: 'text')]
     private $original_title;
 
@@ -47,6 +50,25 @@ class ExtractedArticle
     public function setUrl(string $url): self
     {
         $this->url = $url;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getText()
+    {
+        return $this->text;
+    }
+
+    /**
+     * @param mixed $text
+     * @return ExtractedArticle
+     */
+    public function setText($text): ExtractedArticle
+    {
+        $this->text = $text;
 
         return $this;
     }
