@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+{% endblock %}
+
+
+
+{% block body%}
+    <body>
+    <div class="s003" style="flex-direction:column;">
+
+       <h1 style = "color:white">What we think about</h1>
+        <h4 style = "color:lightskyblue"><a><b>{{ url }}</b></a></h4>
+
+        <div style="color:white; padding:100px; width:70%">
+            The fake news detection method analyzes news articles to identify whether they are likely to be real news or
+            not. With the help of custom AI classifiers, it can detect different types of fake information, such as propaganda,
+            conspiracy, pseudoscience, bias, irony.
+
+            News analysis algorithm uses a wide range of components in order to successfully solve the fake news detection
+            problem: custom machine learning models trained on fake and biased articles, proprietary multi-language summarization
+            technology to extract only important information and remove information noise, historical news data search to
+            check the story relevancy and misleading facts, database of trusted and biased websites created by our experts.
+
+        </div>
+
+        <div>
+            <h1 style = "color:forestgreen;width:50%">Real: {{ real }}</h1>
+            <h1 style = "color:darkred;width:50%">Fake: {{ fake }}</h1>
+        </div>
+
+
+        <h1 style = "color:white;padding-top:100px">Detailed scores</h1>
+
+
+
+
+    </div>
+
+
+    <div id="chartdiv"></div>
+
+
+    </body>
+
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+            background-color: #1e2933;
+        }
+    </style>
+
+
+    <script>
+        /**
+         * ---------------------------------------
+         * This demo was created using amCharts 5.
+         *
+         * For more information visit:
+         * https://www.amcharts.com/
+         *
+         * Documentation is available at:
+         * https://www.amcharts.com/docs/v5/
+         * ---------------------------------------
+         */
+
+
+// Create root element
+// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+
+        var test = document.getElementById('chartdiv').innerHTML;
+
+        console.log(test);
+
+        var root = am5.Root.new("chartdiv");
+
+        // Set themes
+        // https://www.amcharts.com/docs/v5/concepts/themes/
+        root.setThemes([
+            am5themes_Animated.new(root)
+        ]);
+
+        console.log(root);
+
+        // Create chart
+        // https://www.amcharts.com/docs/v5/charts/radar-chart/
+        var chart = root.container.children.push(am5radar.RadarChart.new(root, {
+            panX: false,
+            panY: false,
+            wheelX: "panX",
+            wheelY: "zoomX",
+            innerRadius: am5.percent(20),
+            startAngle: -90,
+            endAngle: 180
+        }));
+
+
+        // Data
+        var data = [{
+            category: "Bias",
+            value: {{ bias }},
+            full: 100,
+            columnSettings: {
+                fill: chart.get("colors").getIndex(0)
+            }
+        }, {
+            category: "Conspiracy",
+            value: {{ conspiracy }},
+            full: 100,
+            columnSettings: {
+                fill: chart.get("colors").getIndex(1)
+            }
+        }, {
+            category: "Propaganda",
+            value: {{ propaganda }},
+            full: 100,
+            columnSettings: {
+                fill: chart.get("colors").getIndex(2)
+            }
+        }, {
+            category: "Pseudoscience",
+            value: {{ pseudoscience }},
+            full: 100,
+            columnSettings: {
+                fill: chart.get("colors").getIndex(3)
+            },
+
+        },
+            {
+                category: "Irony",
+                value: {{ irony }},
+                full: 100,
+                columnSettings: {
+                    fill: chart.get("colors").getIndex(4)
+                },
+
+            }];
+
+        // Add cursor
+        // https://www.amcharts.com/docs/v5/charts/radar-chart/#Cursor
+        var cursor = chart.set("cursor", am5radar.RadarCursor.new(root, {
+            behavior: "zoomX"
+        }));
+
+        cursor.lineY.set("visible", false);
+
+        // Create axes and their renderers
+        // https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_axes
+        var xRenderer = am5radar.AxisRendererCircular.new(root, {
+            //minGridDistance: 50
+        });
+
+        xRenderer.labels.template.setAll({
+            radius: 10,
+            fill: am5.color(0xFFFFFF),
+        });
+
+        xRenderer.grid.template.setAll({
+            forceHidden: true
+        });
+
+        var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+            renderer: xRenderer,
+            min: 0,
+            max: 100,
+            strictMinMax: true,
+            numberFormat: "#",
+            tooltip: am5.Tooltip.new(root, {})
+        }));
+
+
+        var yRenderer = am5radar.AxisRendererRadial.new(root, {
+            minGridDistance: 20
+        });
+
+        yRenderer.labels.template.setAll({
+            centerX: am5.p100,
+            fontWeight: "500",
+            fontSize: 30,
+            templateField: "columnSettings"
+        });
+
+        yRenderer.grid.template.setAll({
+            forceHidden: true
+        });
+
+        var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+            categoryField: "category",
+            renderer: yRenderer
+        }));
+
+        yAxis.data.setAll(data);
+
+
+        // Create series
+        // https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_series
+        var series1 = chart.series.push(am5radar.RadarColumnSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            clustered: false,
+            valueXField: "full",
+            categoryYField: "category",
+            fill: root.interfaceColors.get("alternativeBackground")
+        }));
+
+        series1.columns.template.setAll({
+            width: am5.p100,
+            fillOpacity: 0.08,
+            strokeOpacity: 0,
+            cornerRadius: 20
+        });
+
+        series1.data.setAll(data);
+
+
+        var series2 = chart.series.push(am5radar.RadarColumnSeries.new(root, {
+            xAxis: xAxis,
+            yAxis: yAxis,
+            clustered: false,
+            valueXField: "value",
+            categoryYField: "category"
+        }));
+
+        series2.columns.template.setAll({
+            width: am5.p100,
+            strokeOpacity: 0,
+            tooltipText: "{category}: {valueX}",
+            cornerRadius: 20,
+            templateField: "columnSettings"
+        });
+
+        series2.data.setAll(data);
+
+        // Animate chart and series in
+        // https://www.amcharts.com/docs/v5/concepts/animations/#Initial_animation
+        series1.appear(1000);
+        series2.appear(1000);
+        chart.appear(1000, 100);
+    </script>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+{% endblock %}
+

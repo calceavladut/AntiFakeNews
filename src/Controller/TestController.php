@@ -27,8 +27,8 @@ class TestController extends AbstractController
      */
     public function __construct(ManagerRegistry $doctrine, ExtractedArticleRepository $articleRepository)
     {
-        $this->doctrine = $doctrine;
-        $this->entityManager = $this->doctrine->getManager();
+        $this->doctrine          = $doctrine;
+        $this->entityManager     = $this->doctrine->getManager();
         $this->articleRepository = $articleRepository;
     }
 
@@ -38,7 +38,7 @@ class TestController extends AbstractController
      */
     public function extractContent(string $url)
     {
-        $body = '{"text":"'. $url . '","tab":"ae","options":{}}';
+        $body = '{"text":"'.$url.'","tab":"ae","options":{}}';
 
         $ch = curl_init();
 
@@ -57,8 +57,8 @@ class TestController extends AbstractController
      */
     public function verifyUrl(string $url): bool|string
     {
-        $ch = curl_init();
-        $body = '{"text":"'. $url . '","tab":"fn","options":{}}';
+        $ch   = curl_init();
+        $body = '{"text":"'.$url.'","tab":"fn","options":{}}';
 
         curl_setopt($ch, CURLOPT_URL, 'https://www.summarizebot.com/scripts/analysis.py');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -74,12 +74,13 @@ class TestController extends AbstractController
      * @return array
      * @throws \ErrorException
      */
-    public function translate($data) {
+    public function translate($data)
+    {
         $translator = new GoogleTranslate('en');
 
         return [
             'title' => $translator->translate($data['title']),
-            'text'  => $translator->translate($data['text'])
+            'text'  => $translator->translate($data['text']),
         ];
     }
 
@@ -89,17 +90,17 @@ class TestController extends AbstractController
      * @return Response
      * @throws \ErrorException
      */
-    public function saveContentFromUrl(string $url, bool $isForApi = false): Response
+    public function saveContentFromUrl(string $url, bool $isForSite = false): Response
     {
         $result = $this->extractContent($url);
 
         $data = [
             "title" => json_decode($result)->{'article title'},
-            "text"  => json_decode($result)->{'text'}
+            "text"  => json_decode($result)->{'text'},
         ];
 
         $dataTranslated = $this->translate($data);
-        $article = $this->articleRepository->findArticleByUrl($url);
+        $article        = $this->articleRepository->findArticleByUrl($url);
 
         if (!$article) {
             $article = new ExtractedArticle();
@@ -113,24 +114,18 @@ class TestController extends AbstractController
             $this->entityManager->flush();
         }
 
-        if ($isForApi) {
-//            $route = $this->generateUrl('generated_url', ['id' => $article->getId()]);
-            return $this->getUrlStats($url, true);
-        }
-
-        return $this->redirectToRoute('generated_url', ['id' => $article->getId()]);
+        return $this->getUrlStats($url, true);
     }
 
     /**
      * @param string $text
-     * @return Response
      * @throws \ErrorException
      */
     public function verifyContentFromText(string $text)
     {
         $data = [
             "title" => "",
-            "text"  => $text
+            "text"  => $text,
         ];
 
         $dataTranslated = $this->translate($data);
@@ -141,7 +136,8 @@ class TestController extends AbstractController
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        return $this->redirectToRoute('generated_url', ['id' => $article->getId()]);
+        $url = $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        return $this->getUrlStats($url, true);
     }
 
     /**
@@ -153,7 +149,7 @@ class TestController extends AbstractController
         if (is_object($article)) {
             return $this->render('text_page.html.twig', [
                 'title' => $article->getTranslatedTitle() ?: '',
-                'text'  => $article->getTranslatedContent()
+                'text'  => $article->getTranslatedContent(),
             ]);
         }
 
@@ -174,15 +170,17 @@ class TestController extends AbstractController
             /** @var ExtractedArticle $data */
             $data = $form->getData();
 
-            if ($data->getUrl()) {;
+            if ($data->getUrl()) {
                 return $this->saveContentFromUrl($data->getUrl());
-            } else if ($data->getText()) {
-                return $this->verifyContentFromText($data->getText());
+            } else {
+                if ($data->getText()) {
+                    return $this->verifyContentFromText($data->getText());
+                }
             }
         }
 
         return $this->render('index.html.twig', [
-            'articleForm' => $form->createView()
+            'articleForm' => $form->createView(),
         ]);
     }
 
@@ -191,53 +189,65 @@ class TestController extends AbstractController
      */
     public function getUrlFromExtension()
     {
-        return $this->saveContentFromUrl($_GET['url'], true);
+        return $this->saveContentFromUrl($_POST['url']);
     }
 
     /**
      * @param string|null $url
-     * @param false $isForApi
+     * @param bool $isForSite
      * @return Response
      */
-    public function getUrlStats(?string $url, $isForApi = false) {
-        $result = $this->verifyUrl($url);
-        $real = 0;
-        $fake = 0;
-        $bias = 0;
-        $conspiracy = 0;
-        $propaganda = 0;
+    public function getUrlStats(?string $url, bool $isForSite = false): Response
+    {
+        $result        = $this->verifyUrl($url);
+        $real          = 0;
+        $fake          = 0;
+        $bias          = 0;
+        $conspiracy    = 0;
+        $propaganda    = 0;
         $pseudoscience = 0;
-        $irony = 0;
+        $irony         = 0;
+
+        $decoded       = json_decode($result, true);
+        $arrayDecoded  = (array)$decoded;
 
         foreach (json_decode($result)->{'predictions'} as $type) {
-            $fake = $type->{'type'} == 'fake' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
-            $real = $type->{'type'} == 'real' ? $type->{'confidence'}: 1.0 - $type->{'confidence'};
-            $categories = $type->{'type'} == 'fake' ? $type->{'categories'}: [];
+            $fake = $type->{'type'} == 'fake' ? $type->{'confidence'} : 1.0 - $type->{'confidence'};
+            $real = $type->{'type'} == 'real' ? $type->{'confidence'} : 1.0 - $type->{'confidence'};
+//            $categories = $type->{'type'} == 'fake' ? $type->{'categories'}: [];
         }
 
-        foreach ($categories as $category) {
-            $bias = $category->{'type'} == 'bias' ? $category->{'confidence'}: 0;;
-            $conspiracy = $category->{'type'} == 'conspiracy' ? $category->{'confidence'}: 0;;
-            $propaganda = $category->{'type'} == 'propaganda' ? $category->{'confidence'}: 0;;
-            $pseudoscience = $category->{'type'} == 'pseudoscience' ? $category->{'confidence'}: 0;;
-            $irony = $category->{'type'} == 'irony' ? $category->{'confidence'}: 0;;
+        if ($real < 0.5) {
+            $bias          = $arrayDecoded['predictions'][1]['categories'][0]['confidence'];
+            $conspiracy    = $arrayDecoded['predictions'][1]['categories'][1]['confidence'];
+            $propaganda    = $arrayDecoded['predictions'][1]['categories'][2]['confidence'];
+            $pseudoscience = $arrayDecoded['predictions'][1]['categories'][3]['confidence'];
+            $irony         = $arrayDecoded['predictions'][1]['categories'][4]['confidence'];
         }
 
-        $dates = [
-            'fake' => $fake,
-            'real' => $real,
-            'bias' => $bias,
-            'conspiracy' => $conspiracy,
-            'propaganda' => $propaganda,
+        $data = [
+            'fake'          => $fake,
+            'real'          => $real,
+            'bias'          => $bias,
+            'conspiracy'    => $conspiracy,
+            'propaganda'    => $propaganda,
             'pseudoscience' => $pseudoscience,
-            'irony' => $irony
+            'irony'         => $irony,
         ];
 
-        if ($isForApi) {
-            return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
+        if ($isForSite === false) {
+            return new Response('{"real":"'.$real.'", "fake":"'.$fake.'"}');
+        } else {
+            return $this->render('resultsurl.html.twig', [
+                'bias'          => $data['bias'] * 100,
+                'conspiracy'    => $data['conspiracy'] * 100,
+                'propaganda'    => $data['propaganda'] * 100,
+                'pseudoscience' => $data['pseudoscience'] * 100,
+                'irony'         => $data['irony'] * 100,
+                'url'           => $url,
+                'fake'          => $fake,
+                'real'          => $real,
+            ]);
         }
-
-        return new Response('test');
-
     }
 }
