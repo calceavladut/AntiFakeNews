@@ -114,11 +114,12 @@ class TestController extends AbstractController
             $this->entityManager->flush();
         }
 
-        return $this->getUrlStats($url, true);
+        return $this->getUrlStats($url, $isForSite);
     }
 
     /**
      * @param string $text
+     * @return Response
      * @throws \ErrorException
      */
     public function verifyContentFromText(string $text)
@@ -171,10 +172,10 @@ class TestController extends AbstractController
             $data = $form->getData();
 
             if ($data->getUrl()) {
-                return $this->saveContentFromUrl($data->getUrl());
+                return $this->saveContentFromUrl($data->getUrl(), true);
             } else {
                 if ($data->getText()) {
-                    return $this->verifyContentFromText($data->getText());
+                    return $this->verifyContentFromText($data->getText(), true);
                 }
             }
         }
