@@ -226,8 +226,6 @@ class TestController extends AbstractController
             'irony' => $irony
         ];
 
-        return new Response('asd');
-        // ii trimiti aici metoda ta cu dates
-//        return $dates;
+        return new Response('{"real":"' . $real . '", "fake":"' . $fake . '"}');
     }
 }
