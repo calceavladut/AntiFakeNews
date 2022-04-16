@@ -45,6 +45,29 @@ class ExtractedArticleRepository extends ServiceEntityRepository
         }
     }
 
+    public function findArticleByUrl($url)
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.url = :val')
+            ->setParameter('val', $url)
+            ->getQuery()
+            ->getResult()
+            ;
+    }
+
+    public function updateScores($url, $real_score, $fake_score)
+    {
+        return $this->createQueryBuilder('s')
+            ->update()
+            ->set('s.real_score', $real_score)
+            ->set('s.fake_score', $fake_score)
+            ->where('s.url = :url')
+            ->setParameter('url', $url)
+            ->getQuery()
+            ->execute()
+            ;
+    }
+
     // /**
     //  * @return ExtractedArticle[] Returns an array of ExtractedArticle objects
     //  */
