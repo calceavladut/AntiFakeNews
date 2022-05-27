@@ -7,6 +7,7 @@ use App\Form\ArticleFormType;
 use App\Repository\ExtractedArticleRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
+use ErrorException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -72,7 +73,7 @@ class TestController extends AbstractController
     /**
      * @param $data
      * @return array
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     public function translate($data)
     {
@@ -86,9 +87,9 @@ class TestController extends AbstractController
 
     /**
      * @param string $url
-     * @param false $isForApi
+     * @param bool $isForSite
      * @return Response
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     public function saveContentFromUrl(string $url, bool $isForSite = false): Response
     {
@@ -114,13 +115,14 @@ class TestController extends AbstractController
             $this->entityManager->flush();
         }
 
-        return $this->getUrlStats($url, $isForSite);
+        $url = $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        return $this->getUrlStats($url, true);
     }
 
     /**
      * @param string $text
      * @return Response
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     public function verifyContentFromText(string $text)
     {
@@ -131,6 +133,7 @@ class TestController extends AbstractController
 
         $dataTranslated = $this->translate($data);
 
+        //TODO: de facut verificare daca exista un articol deja in baza de date cu acelasi text sa nu mai adauge un articol nou
         $article = new ExtractedArticle();
         $article->setTranslatedContent($dataTranslated['text']);
 
@@ -171,11 +174,11 @@ class TestController extends AbstractController
             /** @var ExtractedArticle $data */
             $data = $form->getData();
 
-            if ($data->getUrl()) {
-                return $this->saveContentFromUrl($data->getUrl(), true);
+            if ($data->getText()) {
+                return $this->verifyContentFromText($data->getText(), true);
             } else {
-                if ($data->getText()) {
-                    return $this->verifyContentFromText($data->getText(), true);
+                if ($data->getUrl()) {
+                    return $this->saveContentFromUrl($data->getUrl(), true);
                 }
             }
         }
@@ -187,6 +190,7 @@ class TestController extends AbstractController
 
     /**
      * @Route("/get-url", name="get_url_from_extension")
+     * @throws ErrorException
      */
     public function getUrlFromExtension()
     {
