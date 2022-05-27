@@ -137,14 +137,9 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
-        $article        = $this->articleRepository->findArticleByTranslatedText($dataTranslated);
-
-        if ($article){
-            dd($article);
-        }
+        $article        = $this->articleRepository->findArticleByTranslatedText($dataTranslated['text']);
 
         if (!$article) {
-            //TODO: de facut verificare daca exista un articol deja in baza de date cu acelasi text sa nu mai adauge un articol nou
             $article = new ExtractedArticle();
             $article->setTranslatedContent($dataTranslated['text']);
 
