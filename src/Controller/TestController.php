@@ -137,7 +137,7 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
-        $article        = $this->articleRepository->findByText($dataTranslated);
+        $article        = $this->articleRepository->findArticleByTranslatedText($dataTranslated);
 
         if ($article){
             dd($article);

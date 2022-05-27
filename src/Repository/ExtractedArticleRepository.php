@@ -4,8 +4,7 @@ namespace App\Repository;
 
 use App\Entity\ExtractedArticle;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -22,8 +21,8 @@ class ExtractedArticleRepository extends ServiceEntityRepository
     }
 
     /**
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * @param ExtractedArticle $entity
+     * @param bool $flush
      */
     public function add(ExtractedArticle $entity, bool $flush = true): void
     {
@@ -34,8 +33,8 @@ class ExtractedArticleRepository extends ServiceEntityRepository
     }
 
     /**
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * @param ExtractedArticle $entity
+     * @param bool $flush
      */
     public function remove(ExtractedArticle $entity, bool $flush = true): void
     {
@@ -50,6 +49,16 @@ class ExtractedArticleRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('a')
             ->andWhere('a.url = :val')
             ->setParameter('val', $url)
+            ->getQuery()
+            ->getOneOrNullResult()
+            ;
+    }
+
+    public function findArticleByTranslatedText($text)
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.translatedContent = :val')
+            ->setParameter('val', $text)
             ->getQuery()
             ->getOneOrNullResult()
             ;
