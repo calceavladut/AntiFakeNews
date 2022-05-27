@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\ExtractedArticle;
 use App\Form\ArticleFormType;
 use App\Repository\ExtractedArticleRepository;
-use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use ErrorException;
@@ -14,7 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
 use Symfony\Component\HttpFoundation\Response;
-use function Symfony\Component\String\u;
 
 
 class TestController extends AbstractController
