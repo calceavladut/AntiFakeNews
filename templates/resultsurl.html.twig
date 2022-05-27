@@ -7,43 +7,37 @@
 {% endblock %}
 
 
-
 {% block body%}
     <body>
-    <div class="s003" style="flex-direction:column;">
+        <div class="s003" style="flex-direction:column;min-height:0">
 
-       <h1 style = "color:white">What we think about</h1>
-        <h4 style = "color:lightskyblue"><a><b>{{ url }}</b></a></h4>
+            <h1 style = "color:white">What we think about</h1>
+            <h4 style = "color:lightskyblue"><a><b>{{ url }}</b></a></h4>
 
-        <div style="color:white; padding:100px; width:70%">
-            The fake news detection method analyzes news articles to identify whether they are likely to be real news or
-            not. With the help of custom AI classifiers, it can detect different types of fake information, such as propaganda,
-            conspiracy, pseudoscience, bias, irony.
+            <div>
+                <h1 style = "color:forestgreen">{{ real | round}}% real</h1>
+                <h1 style = "color:darkred">{{ fake | round}}% fake</h1>
+            </div>
 
-            News analysis algorithm uses a wide range of components in order to successfully solve the fake news detection
-            problem: custom machine learning models trained on fake and biased articles, proprietary multi-language summarization
-            technology to extract only important information and remove information noise, historical news data search to
-            check the story relevancy and misleading facts, database of trusted and biased websites created by our experts.
+            <div style="color:white; padding:100px; width:70%">
+                The fake news detection method analyzes news articles to identify whether they are likely to be real news or
+                not. With the help of custom AI classifiers, it can detect different types of fake information, such as propaganda,
+                conspiracy, pseudoscience, bias, irony.
+
+                News analysis algorithm uses a wide range of components in order to successfully solve the fake news detection
+                problem: custom machine learning models trained on fake and biased articles, proprietary multi-language summarization
+                technology to extract only important information and remove information noise, historical news data search to
+                check the story relevancy and misleading facts, database of trusted and biased websites created by our experts.
+
+            </div>
 
         </div>
 
-        <div>
-            <h1 style = "color:forestgreen;width:50%">Real: {{ real }}</h1>
-            <h1 style = "color:darkred;width:50%">Fake: {{ fake }}</h1>
-        </div>
+        {% if real < 50 %}
+            <h1 style = "color:white">Detailed scores</h1>
 
-
-        <h1 style = "color:white;padding-top:100px">Detailed scores</h1>
-
-
-
-
-    </div>
-
-
-    <div id="chartdiv"></div>
-
-
+            <div id="chartdiv"></div>
+        {% endif %}
     </body>
 
     <style>

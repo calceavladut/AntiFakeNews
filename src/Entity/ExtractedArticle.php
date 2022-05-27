@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ExtractedArticleRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ExtractedArticleRepository::class)]
 class ExtractedArticle
@@ -14,13 +15,19 @@ class ExtractedArticle
     private $id;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $url;
+    /**
+     * @Assert\Url(
+     *    protocols = {"http", "https", "ftp"},
+     *    message = "The url is not a valid url. Example for a valid url: ' https://www.your-article.ro/ '",
+     * )
+     */
+    private ?string $url;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $text;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    private $original_title;
+    private ?string $original_title;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private $original_content;
@@ -54,19 +61,17 @@ class ExtractedArticle
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
+
     public function getText()
     {
         return $this->text;
     }
 
     /**
-     * @param mixed $text
+     * @param string|null $text
      * @return ExtractedArticle
      */
-    public function setText($text): ExtractedArticle
+    public function setText(?string $text): ExtractedArticle
     {
         $this->text = $text;
 

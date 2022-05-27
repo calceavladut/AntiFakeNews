@@ -53,12 +53,22 @@ class TrustedSitesRepository extends ServiceEntityRepository
             ;
     }
 
-    public function updateTrustedSite($id, $trueHits, $falseHits, $totalHits)
+    public function getTopTrustedSites()
+    {
+        return $this->createQueryBuilder('a')
+            ->orderBy('a.percentage', 'DESC')
+            ->setMaxResults(10)
+            ->getQuery()
+            ->getArrayResult()
+            ;
+    }
+
+    public function updateTrustedSite($id, $realHits, $fakeHits, $totalHits)
     {
         return $this->createQueryBuilder('a')
             ->andWhere('a.id = :id')
-            ->set('a.trueHits', $trueHits)
-            ->set('a.falseHits', $falseHits)
+            ->set('a.realHits', $realHits)
+            ->set('a.fakeHits', $fakeHits)
             ->set('a.totalHits', $totalHits)
             ->setParameter('id', $id)
             ->getQuery()

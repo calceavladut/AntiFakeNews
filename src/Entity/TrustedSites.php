@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\Repository\ExtractedArticleRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\Entity(repositoryClass: ExtractedArticleRepository::class)]
 class TrustedSites
 {
     #[ORM\Id]
@@ -15,20 +17,24 @@ class TrustedSites
     private string $domain;
 
     #[ORM\Column(type: 'integer')]
-    private int $trueHits;
+    private int $realHits;
 
     #[ORM\Column(type: 'integer')]
-    private int $falseHits;
+    private int $fakeHits;
 
     #[ORM\Column(type: 'integer')]
     private int $totalHits;
 
+    #[ORM\Column(type: 'float', nullable: true)]
+    private float $percentage;
+
     public function __construct(string $domain)
     {
         $this->domain = $domain;
-        $this->trueHits = 0;
-        $this->falseHits = 0;
+        $this->realHits = 0;
+        $this->fakeHits = 0;
         $this->totalHits = 0;
+        $this->percentage = 0.0;
     }
 
     public function getId(): int
@@ -56,26 +62,26 @@ class TrustedSites
 
     }
 
-    public function getTrueHits(): int
+    public function getRealHits(): int
     {
-        return $this->trueHits;
+        return $this->realHits;
     }
 
-    public function setTrueHits($trueHits): TrustedSites
+    public function setRealHits($realHits): TrustedSites
     {
-        $this->trueHits = $trueHits;
+        $this->realHits = $realHits;
 
         return $this;
     }
 
-    public function getFalseHits(): int
+    public function getFakeHits(): int
     {
-        return $this->falseHits;
+        return $this->fakeHits;
     }
 
-    public function setFalseHits($falseHits): TrustedSites
+    public function setFakeHits($fakeHits): TrustedSites
     {
-        $this->falseHits = $falseHits;
+        $this->fakeHits = $fakeHits;
 
         return $this;
     }
@@ -91,5 +97,19 @@ class TrustedSites
 
         return $this;
     }
+
+    public function getPercentage(): float
+    {
+        return $this->percentage;
+    }
+
+    public function setPercentage(float $percentage): TrustedSites
+    {
+        $this->percentage = $percentage;
+
+        return $this;
+    }
+
+
 
 }

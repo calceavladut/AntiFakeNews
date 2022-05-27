@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ExtractedArticle;
+use App\Entity\TrustedSites;
 use App\Form\ArticleFormType;
 use App\Repository\ExtractedArticleRepository;
 use App\Repository\TrustedSitesRepository;
@@ -14,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
 use Symfony\Component\HttpFoundation\Response;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\service_locator;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 
 class TestController extends AbstractController
@@ -26,10 +27,10 @@ class TestController extends AbstractController
     private ExtractedArticleRepository $articleRepository;
     private TrustedSitesRepository $trustedSitesRepository;
 
-    private string $dns = 'http://roundearthsociety.zapto.org:81';
-
     /**
      * @param ManagerRegistry $doctrine
+     * @param ExtractedArticleRepository $articleRepository
+     * @param TrustedSitesRepository $trustedSitesRepository
      */
     public function __construct(ManagerRegistry $doctrine, ExtractedArticleRepository $articleRepository, TrustedSitesRepository $trustedSitesRepository)
     {
@@ -60,6 +61,7 @@ class TestController extends AbstractController
 
     /**
      * @param string $url
+     *
      * @return bool|string
      */
     public function verifyUrl(string $url): bool|string
@@ -92,43 +94,119 @@ class TestController extends AbstractController
     }
 
     /**
+     * @param $url
+     *
+     * @return array
+     */
+    public function getDataFromUrl($url): array
+    {
+        $result = $this->extractContent($url);
+
+        $data = [];
+        $articleDecoded = json_decode($result, true);
+        if (!empty($articleDecoded['article title'])) {
+            $data['title'] = $articleDecoded['article title'];
+        }
+        else {
+            $data['title'] = 'title';
+        }
+
+        if (!empty($articleDecoded['text'])) {
+            $data['text'] = $articleDecoded['text'];
+        }
+        else {
+            $data['text'] = 'text';
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param $data
+     * @param $dataTranslated
+     * @param $url
+     *
+     * @return ExtractedArticle
+     */
+    public function createArticleIfNotExists ($data, $dataTranslated, $url): ExtractedArticle
+    {
+        $article = new ExtractedArticle();
+        $article->setOriginalContent($data['text']);
+        $article->setOriginalTitle($data['title']);
+        $article->setTranslatedContent($dataTranslated['text']);
+        $article->setTranslatedTitle($dataTranslated['title']);
+        $article->setUrl($url);
+
+        $this->entityManager->persist($article);
+        $this->entityManager->flush();
+
+        return $article;
+    }
+
+    /**
+     * @param $article
+     */
+    public function populateTrustedSitesTable ($article) {
+        $real = 0;
+        $fake = 0;
+
+        $parsedDomain = parse_url($article->getUrl())['host'];
+
+        $domain = $this->trustedSitesRepository->findTrustedSiteByDomain($parsedDomain);
+        $url = $this->generateUrl('generated_url', ['id' => $article->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $urlStats = $this->verifyUrl($url);
+
+        $result = json_decode($urlStats, true);
+        foreach ($result['predictions'] as $type) {
+            $fake = $type['type'] == 'fake' ? $type['confidence'] : 1.0 - $type['confidence'];
+            $real = $type['type'] == 'real' ? $type['confidence'] : 1.0 - $type['confidence'];
+        }
+
+        if (!$domain) {
+            $trustedSite = new TrustedSites($parsedDomain);
+            $trustedSite->setTotalHits(1);
+
+            $fake > $real ? $trustedSite->setPercentage(0) : $trustedSite->setPercentage(100);
+            $fake > $real ? $trustedSite->setFakeHits(1) : $trustedSite->setRealHits(1);
+
+            $this->entityManager->persist($trustedSite);
+        } else {
+            $totalHits = $domain->getTotalHits();
+            $falseHits = $domain->getFakeHits();
+            $trueHits = $domain->getRealHits();
+            $percentage = $trueHits / $totalHits * 100;
+
+            $domain->setTotalHits($totalHits + 1);
+            $domain->setPercentage($percentage);
+            $fake > $real ? $domain->setFakeHits($falseHits + 1) : $domain->setRealHits($trueHits + 1);
+
+            $this->entityManager->persist($domain);
+        }
+    }
+
+    /**
      * @param string $url
      * @param bool $isForSite
      * @return Response
      * @throws ErrorException
      */
-    public function saveContentFromUrl(string $url, bool $isForSite = false): Response
+    public function saveContentFromUrl(string $url, bool $isForSite): Response
     {
-        $result = $this->extractContent($url);
-
-        $data = [
-            "title" => json_decode($result)->{'article title'},
-            "text"  => json_decode($result)->{'text'},
-        ];
+        $data = $this->getDataFromUrl($url);
 
         $dataTranslated = $this->translate($data);
         $article        = $this->articleRepository->findArticleByUrl($url);
 
         if (!$article) {
-            $article = new ExtractedArticle();
-            $article->setOriginalContent(json_decode($result)->{'text'});
-            $article->setOriginalTitle(json_decode($result)->{'article title'});
-            $article->setTranslatedContent($dataTranslated['text']);
-            $article->setTranslatedTitle($dataTranslated['title']);
-            $article->setUrl($url);
-
-            $this->entityManager->persist($article);
-            $this->entityManager->flush();
+            $article = $this->createArticleIfNotExists($data, $dataTranslated, $url);
+            $this->populateTrustedSitesTable($article);
         }
+        else {
+            $url = $this->generateUrl('generated_url', ['id' => $article->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        }
+        $this->entityManager->flush();
 
-
-        $parsedDomain = parse_url($article->getUrl())['host'];
-        $domain = $this->trustedSitesRepository->findTrustedSiteByDomain($parsedDomain);
-        var_dump($parsedDomain, $domain);die();
-
-        $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
-
-        return $this->getUrlStats($url, true);
+        return $this->getUrlStats($url, $isForSite, $article->getUrl());
     }
 
     /**
@@ -155,7 +233,7 @@ class TestController extends AbstractController
 
         }
 
-        $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        $url = $this->generateUrl('generated_url', ['id' => $article->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         return $this->getUrlStats($url, true);
     }
@@ -191,7 +269,7 @@ class TestController extends AbstractController
             $data = $form->getData();
 
             if ($data->getText()) {
-                return $this->verifyContentFromText($data->getText(), true);
+                return $this->verifyContentFromText($data->getText());
             } else {
                 if ($data->getUrl()) {
                     return $this->saveContentFromUrl($data->getUrl(), true);
@@ -210,15 +288,16 @@ class TestController extends AbstractController
      */
     public function getUrlFromExtension()
     {
-        return $this->saveContentFromUrl($_POST['url']);
+        return $this->saveContentFromUrl($_POST['url'], false);
     }
 
     /**
      * @param string|null $url
      * @param bool $isForSite
+     * @param string|null $articleUrl
      * @return Response
      */
-    public function getUrlStats(?string $url, bool $isForSite = false): Response
+    public function getUrlStats(?string $url, bool $isForSite = false, ?string $articleUrl = null): Response
     {
         $result        = $this->verifyUrl($url);
         $real          = 0;
@@ -235,7 +314,6 @@ class TestController extends AbstractController
         foreach (json_decode($result)->{'predictions'} as $type) {
             $fake = $type->{'type'} == 'fake' ? $type->{'confidence'} : 1.0 - $type->{'confidence'};
             $real = $type->{'type'} == 'real' ? $type->{'confidence'} : 1.0 - $type->{'confidence'};
-//            $categories = $type->{'type'} == 'fake' ? $type->{'categories'}: [];
         }
 
         if ($real < 0.5) {
@@ -265,9 +343,9 @@ class TestController extends AbstractController
                 'propaganda'    => $data['propaganda'] * 100,
                 'pseudoscience' => $data['pseudoscience'] * 100,
                 'irony'         => $data['irony'] * 100,
-                'url'           => $url,
-                'fake'          => $fake,
-                'real'          => $real,
+                'fake'          => $data['fake'] * 100,
+                'real'          => $data['real'] * 100,
+                'url'           => $articleUrl,
             ]);
         }
     }
@@ -275,10 +353,13 @@ class TestController extends AbstractController
 
     /**
      * @Route("/trusted-sites", name="trusted_sited")
-     * @throws ErrorException
+     * @return Response
      */
-    public function getTrustedSites()
+    public function getTrustedSites(): Response
     {
-        return $this->saveContentFromUrl($_POST['url']);
+        return $this->render('trusted_sites.html.twig',
+        [
+            'trusted_sites' => $this->trustedSitesRepository->getTopTrustedSites()
+        ]);
     }
 }
