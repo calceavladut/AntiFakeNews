@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\ExtractedArticle;
 use App\Form\ArticleFormType;
 use App\Repository\ExtractedArticleRepository;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use ErrorException;
@@ -127,8 +128,9 @@ class TestController extends AbstractController
      * @param string $text
      * @return Response
      * @throws ErrorException
+     * @throws NonUniqueResultException
      */
-    public function verifyContentFromText(string $text)
+    public function verifyContentFromText(string $text): Response
     {
         $data = [
             "title" => "",
@@ -136,7 +138,7 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
-        $article        = $this->articleRepository->findArticleByText($dataTranslated);
+        $article        = $this->articleRepository->getArticlesByText($dataTranslated);
 
         if ($article){
             dd($article);
