@@ -128,7 +128,6 @@ class TestController extends AbstractController
      * @param string $text
      * @return Response
      * @throws ErrorException
-     * @throws NonUniqueResultException
      */
     public function verifyContentFromText(string $text): Response
     {
@@ -138,7 +137,7 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
-        $article        = $this->articleRepository->getArticlesByText($dataTranslated);
+        $article        = $this->articleRepository->findByText($dataTranslated);
 
         if ($article){
             dd($article);
