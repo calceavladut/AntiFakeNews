@@ -64,6 +64,16 @@ class ExtractedArticleRepository extends ServiceEntityRepository
             ;
     }
 
+    public function findTrustedSites($text)
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.translated_content LIKE :val')
+            ->setParameter('val', '%' . $text . '%')
+            ->getQuery()
+            ->getOneOrNullResult()
+            ;
+    }
+
     public function updateScores($url, $real_score, $fake_score)
     {
         return $this->createQueryBuilder('s')

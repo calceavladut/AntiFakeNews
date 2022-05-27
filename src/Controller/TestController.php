@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\ExtractedArticle;
 use App\Form\ArticleFormType;
 use App\Repository\ExtractedArticleRepository;
+use App\Repository\TrustedSitesRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use ErrorException;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
 use Symfony\Component\HttpFoundation\Response;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service_locator;
 
 
 class TestController extends AbstractController
@@ -22,17 +24,19 @@ class TestController extends AbstractController
     private ManagerRegistry $doctrine;
 
     private ExtractedArticleRepository $articleRepository;
+    private TrustedSitesRepository $trustedSitesRepository;
 
     private string $dns = 'http://roundearthsociety.zapto.org:81';
 
     /**
      * @param ManagerRegistry $doctrine
      */
-    public function __construct(ManagerRegistry $doctrine, ExtractedArticleRepository $articleRepository)
+    public function __construct(ManagerRegistry $doctrine, ExtractedArticleRepository $articleRepository, TrustedSitesRepository $trustedSitesRepository)
     {
         $this->doctrine          = $doctrine;
         $this->entityManager     = $this->doctrine->getManager();
         $this->articleRepository = $articleRepository;
+        $this->trustedSitesRepository = $trustedSitesRepository;
     }
 
     /**
@@ -116,6 +120,11 @@ class TestController extends AbstractController
             $this->entityManager->persist($article);
             $this->entityManager->flush();
         }
+
+
+        $parsedDomain = parse_url($article->getUrl())['host'];
+        $domain = $this->trustedSitesRepository->findTrustedSiteByDomain($parsedDomain);
+        var_dump($parsedDomain, $domain);die();
 
         $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
 
@@ -261,5 +270,15 @@ class TestController extends AbstractController
                 'real'          => $real,
             ]);
         }
+    }
+
+
+    /**
+     * @Route("/trusted-sites", name="trusted_sited")
+     * @throws ErrorException
+     */
+    public function getTrustedSites()
+    {
+        return $this->saveContentFromUrl($_POST['url']);
     }
 }
