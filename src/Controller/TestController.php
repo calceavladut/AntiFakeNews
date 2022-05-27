@@ -119,7 +119,7 @@ class TestController extends AbstractController
         }
 
         $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
-        var_dump($url);die();
+
         return $this->getUrlStats($url, true);
     }
 
@@ -136,16 +136,24 @@ class TestController extends AbstractController
         ];
 
         $dataTranslated = $this->translate($data);
+        $article        = $this->articleRepository->findArticleByText($dataTranslated);
 
-        //TODO: de facut verificare daca exista un articol deja in baza de date cu acelasi text sa nu mai adauge un articol nou
-        $article = new ExtractedArticle();
-        $article->setTranslatedContent($dataTranslated['text']);
+        if ($article){
+            dd($article);
+        }
 
-        $this->entityManager->persist($article);
-        $this->entityManager->flush();
+        if (!$article) {
+            //TODO: de facut verificare daca exista un articol deja in baza de date cu acelasi text sa nu mai adauge un articol nou
+            $article = new ExtractedArticle();
+            $article->setTranslatedContent($dataTranslated['text']);
+
+            $this->entityManager->persist($article);
+            $this->entityManager->flush();
+
+        }
 
         $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
-        dd($url);
+
         return $this->getUrlStats($url, true);
     }
 
