@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Translator\GoogleTranslate;
 use Symfony\Component\HttpFoundation\Response;
+use function Symfony\Component\String\u;
 
 
 class TestController extends AbstractController
@@ -22,6 +23,8 @@ class TestController extends AbstractController
     private ManagerRegistry $doctrine;
 
     private ExtractedArticleRepository $articleRepository;
+
+    private string $dns = 'http://roundearthsociety.zapto.org:81';
 
     /**
      * @param ManagerRegistry $doctrine
@@ -115,7 +118,8 @@ class TestController extends AbstractController
             $this->entityManager->flush();
         }
 
-        $url = $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        var_dump($url);die();
         return $this->getUrlStats($url, true);
     }
 
@@ -140,7 +144,8 @@ class TestController extends AbstractController
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        $url = $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        $url = $this->dns . $this->generateUrl('generated_url', ['id' => $article->getId()]);
+        dd($url);
         return $this->getUrlStats($url, true);
     }
 
