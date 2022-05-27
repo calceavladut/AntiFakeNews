@@ -57,7 +57,7 @@ class ExtractedArticleRepository extends ServiceEntityRepository
     public function findArticleByTranslatedText($text)
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.translatedContent = :val')
+            ->andWhere('a.translated_content LIKE :val')
             ->setParameter('val', $text)
             ->getQuery()
             ->getOneOrNullResult()
